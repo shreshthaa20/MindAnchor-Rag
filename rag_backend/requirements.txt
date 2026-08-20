@@ -1,0 +1,25 @@
+# FastAPI for building the web framework and API endpoints
+fastapi>=0.110.0
+
+# Uvicorn as the ASGI web server to run the FastAPI application
+uvicorn[standard]>=0.28.0
+
+# Pydantic for data validation and settings management using Python type annotations
+pydantic>=2.6.0
+
+# Pydantic-settings to handle application configuration and environment variables
+pydantic-settings>=2.2.0
+
+# Psycopg for PostgreSQL database adapter (binary version for easier installation)
+psycopg[binary]>=3.1.18
+
+# Python-dotenv to read key-value pairs from a .env file and set them as environment variables
+python-dotenv>=1.0.1
+
+# Google Generative AI SDK to interact with Google's Gemini models (for RAG features)
+google-generativeai>=0.4.0
+
+# PDF Parsing and Langchain
+pypdf>=4.0.0
+langchain-text-splitters>=0.0.1
+langchain-community>=0.0.25

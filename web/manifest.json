@@ -1,6 +1,6 @@
 {
-    "name": "mindmate",
-    "short_name": "mindmate",
+    "name": "MindAnchor",
+    "short_name": "MindAnchor",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
