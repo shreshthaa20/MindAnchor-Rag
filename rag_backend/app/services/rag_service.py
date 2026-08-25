@@ -6,6 +6,18 @@ from ..config import settings
 from ..database import get_db_connection
 
 # Safety Risk Assessment Logic
+
+# Imminent risk — specific statements of immediate intent (checked first, highest priority)
+IMMINENT_RISK_PATTERNS = [
+    re.compile(r"\bi am going to kill myself\b", re.IGNORECASE),
+    re.compile(r"\bi'm going to kill myself\b", re.IGNORECASE),
+    re.compile(r"\bi will kill myself\b", re.IGNORECASE),
+    re.compile(r"\bi have a plan\b", re.IGNORECASE),
+    re.compile(r"\btonight is the night\b", re.IGNORECASE),
+    re.compile(r"\bgoodbye forever\b", re.IGNORECASE),
+]
+
+# Possible risk — broader indicators of distress or self-harm ideation
 POSSIBLE_RISK_PATTERNS = [
     re.compile(r"\bsuicid(e|al)\b", re.IGNORECASE),
     re.compile(r"\bself[-\s]?harm\b", re.IGNORECASE),
@@ -68,6 +80,22 @@ Return a short, natural paragraph only. No headers, no bullet lists, no markdown
 """.strip()
 
 def assess_safety_risk(message: str) -> Dict[str, Any]:
+    # Check imminent risk first — most urgent, most specific
+    for pattern in IMMINENT_RISK_PATTERNS:
+        if pattern.search(message):
+            return {
+                "hasCrisisRisk": True,
+                "riskLevel": "imminent",
+                "response": (
+                    "I'm really sorry you're feeling this much pain. Your safety matters right now. "
+                    "Please contact local emergency services immediately, contact local crisis support, "
+                    "or reach out to a trusted person who can stay with you. If you can, move away from "
+                    "anything you could use to hurt yourself or someone else while you get help. "
+                    "MindAnchor is a support tool, not a replacement for emergency or professional care."
+                )
+            }
+
+    # Then check possible risk — broader distress signals
     for pattern in POSSIBLE_RISK_PATTERNS:
         if pattern.search(message):
             return {
@@ -85,6 +113,28 @@ def assess_safety_risk(message: str) -> Dict[str, Any]:
     return {"hasCrisisRisk": False, "riskLevel": "none"}
 
 
+
+
+# Fallback message when Gemini's own safety filter blocks the response
+GEMINI_SAFETY_RESPONSE = (
+    "I'm really sorry you're carrying this. You do not have to handle it alone. "
+    "If you might hurt yourself, hurt someone else, or feel unable to stay safe, "
+    "please contact local emergency services or reach out to a trusted person nearby. "
+    "MindAnchor can support you, but it is not a replacement for crisis or professional care."
+)
+
+
+def _safe_get_text(response) -> str:
+    """
+    Safely extract text from a Gemini response.
+    If Gemini's own safety filter blocked the response (BlockedPromptException
+    or StopCandidateException), return the standard safety message instead of crashing.
+    """
+    try:
+        return response.text.strip()
+    except Exception:
+        # Gemini raised an exception — likely a safety block on its end
+        return GEMINI_SAFETY_RESPONSE
 
 
 def cosine_similarity(v1: List[float], v2: List[float]) -> float:
@@ -385,7 +435,7 @@ def generate_response(
         f"RECENT_HISTORY: {personalization}\n"
         f"RETRIEVED_CONTEXT: {context}"
     )
-    raw_answer = response.text.strip()
+    raw_answer = _safe_get_text(response)
     answer, recommendations = parse_structured_response(raw_answer)
 
     return {
@@ -452,4 +502,4 @@ RECENT_HISTORY:
         })
         
     response = model.generate_content(contents)
-    return response.text.strip()
+    return _safe_get_text(response)
