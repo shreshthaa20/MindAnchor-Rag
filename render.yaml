@@ -49,7 +49,4 @@ services:
       - key: JWT_SECRET
         value: mindanchor_jwt_secret_production_2026
       - key: RAG_SERVICE_URL
-        fromService:
-          type: web
-          name: mindanchor-rag-backend
-          property: host
+        value: https://mindanchor-rag-backend.onrender.com

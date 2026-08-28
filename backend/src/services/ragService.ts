@@ -202,7 +202,8 @@ export const createWellnessGuideRecommendationForUser = async (
     throw new AppError("Unauthorized.", 401);
   }
 
-  const url = `${getRAGServiceUrl()}/wellness-guide`;
+  const targetBase = getRAGServiceUrl();
+  const url = `${targetBase}/wellness-guide`;
   let resultData;
   try {
     const response = await fetch(url, {
@@ -221,8 +222,9 @@ export const createWellnessGuideRecommendationForUser = async (
 
     resultData = await response.json();
   } catch (error) {
+    console.error(`[RAG Service Connection Error] Failed to call ${url}:`, error);
     if (error instanceof AppError) throw error;
-    throw new AppError(`RAG service error: ${(error as Error).message}`, 502);
+    throw new AppError(`RAG service error (${url}): ${(error as Error).message}`, 502);
   }
 
   const client = await pool.connect();
