@@ -53,16 +53,17 @@ mindmate/
     │   │   ├── journal/        # Journaling
     │   │   ├── dashboard/      # Analytics & insights
     │   │   ├── chat/           # AI companion chat
-    │   │   ├── wellness/       # Wellness resources
     │   │   └── profile/        # User profile
     │   └── shared/             # Shared widgets & helpers
     ├── backend/                # Node.js + Express REST API
     │   └── src/
     │       ├── routes/         # API route definitions
     │       ├── controllers/    # Request handlers
-    │       ├── middleware/     # JWT auth middleware
+    │       ├── middleware/      # JWT auth middleware
     │       ├── models/         # Data models
     │       ├── services/       # Business logic
+    │       ├── utils/          # Utility helpers
+    │       ├── config/         # App configuration
     │       └── database/       # DB config & migrations (Drizzle ORM)
     └── rag_backend/            # Python FastAPI RAG microservice
         └── app/
@@ -98,6 +99,10 @@ mindmate/
 - **psycopg3** — PostgreSQL driver
 - **pgvector** — semantic similarity search
 
+### Database
+- **PostgreSQL 16** with **pgvector** extension
+- **[Neon](https://neon.tech)** — serverless Postgres for production
+
 ---
 
 ## 🚀 Getting Started
@@ -107,95 +112,94 @@ mindmate/
 - [Flutter SDK](https://flutter.dev/docs/get-started/install) (Dart SDK ^3.12.2)
 - [Node.js](https://nodejs.org/) (v18+) & npm
 - [Python](https://www.python.org/) (3.10+)
-- [PostgreSQL](https://www.postgresql.org/) with the [pgvector](https://github.com/pgvector/pgvector) extension
+- [Docker](https://www.docker.com/) & Docker Compose (recommended for local setup)
 
 ---
 
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/shreshthaa20/mindmate.git
-cd mindmate/MindAnchor
+git clone https://github.com/shreshthaa20/MindAnchor-Rag.git
+cd MindAnchor-Rag/MindAnchor
 ```
 
 ---
 
-### 2. Set up the database
+### 2. Configure environment variables
 
-Make sure PostgreSQL is running, then enable pgvector:
+Copy the example env file and fill in your values:
 
-```sql
-CREATE EXTENSION IF NOT EXISTS vector;
+```bash
+cp .env.example .env
 ```
+
+```env
+# Database
+DB_USER=postgres
+DB_PASSWORD=your_db_password
+DB_NAME=mindanchor
+DB_PORT=5432
+
+# Node.js Backend
+PORT=5000
+JWT_SECRET=replace_with_a_unique_64_byte_random_secret
+
+# Google Gemini (for RAG service)
+GEMINI_API_KEY=your_actual_gemini_api_key_here
+```
+
+> **Production**: Use [Neon](https://neon.tech) as a managed serverless Postgres provider. Set `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, and `DB_SSLMODE=require` accordingly.
 
 ---
 
-### 3. Run the Node.js backend
+### 3. Run with Docker (Recommended)
+
+The easiest way to run all three services together:
+
+```bash
+docker-compose up --build
+```
+
+This starts:
+| Service | URL |
+|---|---|
+| Node.js Backend | `http://localhost:5000` |
+| Python RAG Service | `http://localhost:8000` |
+| PostgreSQL + pgvector | `localhost:5432` |
+
+---
+
+### 4. Run manually (without Docker)
+
+#### Node.js Backend
 
 ```bash
 cd backend
 npm install
+npx drizzle-kit push    # run DB migrations
+npm run dev             # development (nodemon)
+# npm start             # production
 ```
 
-Create a `.env` file in the `backend/` directory:
-
-```env
-DATABASE_URL=postgresql://user:password@localhost:5432/mindanchor
-JWT_SECRET=your_jwt_secret
-PORT=5000
-```
-
-Run database migrations with Drizzle:
-
-```bash
-npx drizzle-kit push
-```
-
-Start the server:
-
-```bash
-npm run dev      # development (nodemon)
-npm start        # production
-```
-
-The API will be available at `http://localhost:5000`.
-
----
-
-### 4. Run the Python RAG backend
+#### Python RAG Backend
 
 ```bash
 cd rag_backend
 python -m venv venv
-source venv/bin/activate      # Windows: venv\Scripts\activate
+venv\Scripts\activate   # Windows
+# source venv/bin/activate  # macOS/Linux
 pip install -r requirements.txt
-```
-
-Create a `.env` file in the `rag_backend/` directory:
-
-```env
-DATABASE_URL=postgresql://user:password@localhost:5432/mindanchor
-GEMINI_API_KEY=your_google_gemini_api_key
-```
-
-Start the FastAPI service:
-
-```bash
 uvicorn app.main:app --reload --port 8000
 ```
 
-The RAG service will be available at `http://localhost:8000`.
-
----
-
-### 5. Run the Flutter app
+#### Flutter App
 
 ```bash
 flutter pub get
 flutter run
 ```
 
-> **Tip:** Make sure to update the API base URLs in the Flutter app to point to your backend servers.
+> **Tip:** Update the API base URLs in the Flutter app to point to your running backend services.
 
 ---
 
